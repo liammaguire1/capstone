@@ -3,6 +3,31 @@
 
 {% block body %}
 
-<div>TODO: the actual game</div>
+{% if actor_mode %}
+<div>Name an actor in PLACEHOLDER</div>
+
+<form action="{% url 'play' %}" method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <input class="form-control" type="text" name="actor" placeholder="Actor">
+    </div>
+    <input class="btn btn-primary" type="submit" value="Search">
+    <input type="hidden" name="mode" value="actor">
+</form>
+
+{% else %}
+<div>Name a movie or tv show featuring PLACEHOLDER</div>
+
+<form action="{% url 'play' %}" method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <input class="form-control" type="text" name="work" placeholder="Movie/TV Show">
+    </div>
+    <input class="btn btn-primary" type="submit" value="Search">
+    <input type="hidden" name="mode" value="work">
+</form>
+{% endif %}
+
+{{final}}
 
 {% endblock %}

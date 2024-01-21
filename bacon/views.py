@@ -1,3 +1,6 @@
+import requests
+import random
+
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.shortcuts import render
@@ -5,6 +8,17 @@ from django.urls import reverse
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 
 from .models import *
+
+API_KEY = 'ad78e1d83ebe751f92aa9fdf0b4ddfc7'
+
+ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhZDc4ZTFkODNlYmU3NTFmOTJhYTlmZGYwYjRkZGZjNyIsInN1YiI6IjY1MzZlYjhiNDA4M2IzMDBjM2M5NGJlNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.MszHpRZVMi_fhjggP1dv37zaY0_xyIk4eKrROezzk4w'
+
+url = "https://api.themoviedb.org/3/authentication"
+
+headers = {
+    "accept": "application/json",
+    "Authorization": f"Bearer {ACCESS_TOKEN}"
+}
 
 def login_view(request):
     if request.method == "POST":
@@ -60,8 +74,73 @@ def register(request):
 def index(request):
     return render(request, "bacon/index.html")
 
-def play(request):
-    return render(request, "bacon/play.html")
+def play(request, mode=random.choice([0,1])):
+    
+    final = ''
+
+    # User submitted text
+    if request.method == "POST":
+        
+        # Search movies/tv from actor
+        if request.POST['mode'] == 'actor':
+            actor_mode = actor_to_work(request)
+        
+
+    # GET request
+    elif request.method == 'GET':
+
+        # Query for current game
+        try:
+            score = Score.objects.get(user=request.user)
+            score.streak = 0
+            score.query = None
+        except Score.DoesNotExist:
+            score = Score(
+                user = request.user,
+                streak = 0,
+                query = None
+            )
+        score.save()
+    
+    return render(request, "bacon/play.html", {
+        "final": final
+    })
+
+def actor_to_work(request):
+
+    # Dynamically build url for API request
+    url_one = 'https://api.themoviedb.org/3/search/person?query='
+    url_two = '&include_adult=false&language=en-US&page=1'
+    actor = request.POST['actor'].split()
+    for i, a in enumerate(actor):
+        url_one += a
+        if i < len(actor) - 1:
+            url_one += '%20'
+    url_one += url_two
+
+    # Make API request
+    response = requests.get(url_one, headers=headers)
+
+    # Handle request status
+    if response.status_code == 200:
+        if response.json()['results'] == []:
+            final = 'Actor not found :('
+        else:
+            # Query all movies/tv shows the actor has been in
+            actor_id = response.json()['results'][0]['id']
+            actor_credit_url = f'https://api.themoviedb.org/3/person/{actor_id}/combined_credits'
+            credit_response = requests.get(actor_credit_url, headers=headers)
+
+            # Set current game json to all movies/tvs shows feauturing actor
+            score = Score.objects.get(user=request.user)
+            score.streak += 1
+            score.query = credit_response.json()
+            score.save()
+            return False
+    else:
+        final = 'Request Failed'
+    
+    return True
 
 def leaderboard(request):
     return render(request, "bacon/leaderboard.html")
