@@ -3,10 +3,10 @@
 
 {% block body %}
 
-{% if actor_mode %}
+{% if mode %}
 <div>Name an actor in PLACEHOLDER</div>
 
-<form action="{% url 'play' %}" method="post">
+<form action="{% url 'game' %}" method="post">
     {% csrf_token %}
     <div class="form-group">
         <input class="form-control" type="text" name="actor" placeholder="Actor">
@@ -18,7 +18,7 @@
 {% else %}
 <div>Name a movie or tv show featuring PLACEHOLDER</div>
 
-<form action="{% url 'play' %}" method="post">
+<form action="{% url 'game' %}" method="post">
     {% csrf_token %}
     <div class="form-group">
         <input class="form-control" type="text" name="work" placeholder="Movie/TV Show">

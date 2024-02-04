@@ -1,0 +1,41 @@
+{% extends "bacon/layout.html" %}
+{% load static %}
+
+{% block body %}
+
+<div id="menu-form"><br>
+<form action="{% url 'game' %}" method="post">
+    {% csrf_token %}
+    <label for="player_count">Number of Players:</label>
+    <select id="player_count" onchange="playerCount()">
+        <option value="2" class="players" name="players">2</option>
+        <option value="3" class="players" name="players">3</option>
+        <option value="4" class="players" name="players">4</option>
+        <option value="5" class="players" name="players">5</option>
+        <option value="6" class="players" name="players">6</option>
+    </select>
+
+    <br><br>
+
+    <label>Timer Setting:</label><br>
+    <label for="easy">Easy (30s)</label>
+    <input type="radio" value="30" id="easy" name="time"><br>
+    <label for="medium">Medium (10s)</label>
+    <input type="radio" value="10" id="medium" name="time" checked="True"><br>
+    <label for="hard">Hard (5s)</label>
+    <input type="radio" value="5" id="hard" name="time"><br>
+    <label for="disabled">Disabled</label>
+    <input type="radio" value="0" id="disabled" name="time"><br><br>
+
+    <div id="name_inputs"></div>
+
+    <br><input type="submit" value="Continue">
+</form>
+</div>
+
+{% endblock %}
+
+{% block script %}
+    <script>var CSRF_TOKEN = '{{ csrf_token }}';</script>
+    <script src="{% static 'bacon/menu.js' %}"></script>
+{% endblock %}

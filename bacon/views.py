@@ -74,18 +74,49 @@ def register(request):
 def index(request):
     return render(request, "bacon/index.html")
 
-def play(request, mode=random.choice([0,1])):
+def menu(request):
+    return render(request, "bacon/menu.html")
+
+def game(request):
     
+    # Submission from menu view
+    if request.method == 'POST':
+
+        # Set timer value
+        timer = int(request.POST.get('time'))
+
+        # Create dict of players
+        players = request.POST.getlist("player_names")
+
+    return render(request, "bacon/game.html", {
+        'final': 2
+    })
+    
+
+def placeholder(request, mode=None):
     final = ''
+
+    # Set initial mode
+    if mode == None:
+        mode = random.randint(0, 1)
 
     # User submitted text
     if request.method == "POST":
         
-        # Search movies/tv from actor
+        # Search movie/tv show from actor
         if request.POST['mode'] == 'actor':
-            actor_mode = actor_to_work(request)
-        
+            mode = actor_to_work(request)
+            works = Score.objects.get(user=request.user).query
+            final = []
+            for work in works['cast']:
+                for w in work:
+                    if 'original_title' in w:
+                        final.append(w['original_title'])
 
+        # Search actor from movie/tv show
+        else:
+            mode = work_to_actor(request)
+        
     # GET request
     elif request.method == 'GET':
 
@@ -103,7 +134,8 @@ def play(request, mode=random.choice([0,1])):
         score.save()
     
     return render(request, "bacon/play.html", {
-        "final": final
+        "final": final,
+        "mode": mode
     })
 
 def actor_to_work(request):
@@ -124,7 +156,7 @@ def actor_to_work(request):
     # Handle request status
     if response.status_code == 200:
         if response.json()['results'] == []:
-            final = 'Actor not found :('
+            display = 'Actor not found :('
         else:
             # Query all movies/tv shows the actor has been in
             actor_id = response.json()['results'][0]['id']
@@ -138,8 +170,11 @@ def actor_to_work(request):
             score.save()
             return False
     else:
-        final = 'Request Failed'
+        display = 'Request Failed'
     
+    return True
+
+def work_to_actor(request):
     return True
 
 def leaderboard(request):
