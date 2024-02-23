@@ -4,7 +4,7 @@
 {% block body %}
 
 <div id="menu-form"><br>
-<form action="{% url 'game' %}" method="post">
+<form action="{% url 'game_load' %}" method="post">
     {% csrf_token %}
     <label for="player_count">Number of Players:</label>
     <select id="player_count" onchange="playerCount()">

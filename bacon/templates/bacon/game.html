@@ -3,31 +3,26 @@
 
 {% block body %}
 
-{% if mode %}
-<div>Name an actor in PLACEHOLDER</div>
+<div style="display: none" id="gameData" players="{{ players }}" timer="{{ timer }}"></div>
 
-<form action="{% url 'game' %}" method="post">
-    {% csrf_token %}
+<div style="text-align: center;" id="time"></div>
+
+<div id="current-player"></div>
+
+<div id="instruction"></div>
+
+<div id="api_return"></div>
+
+<form id="guess_form" onsubmit="return false;">
     <div class="form-group">
-        <input class="form-control" type="text" name="actor" placeholder="Actor">
+        <input class="form-control" type="text" id="guess_text" placeholder="Actor">
     </div>
-    <input class="btn btn-primary" type="submit" value="Search">
-    <input type="hidden" name="mode" value="actor">
+    <input class="btn btn-primary" type="submit" id="guess_button" value="Submit">
 </form>
 
-{% else %}
-<div>Name a movie or tv show featuring PLACEHOLDER</div>
+{% endblock %}
 
-<form action="{% url 'game' %}" method="post">
-    {% csrf_token %}
-    <div class="form-group">
-        <input class="form-control" type="text" name="work" placeholder="Movie/TV Show">
-    </div>
-    <input class="btn btn-primary" type="submit" value="Search">
-    <input type="hidden" name="mode" value="work">
-</form>
-{% endif %}
-
-{{final}}
-
+{% block script %}
+    <script>var CSRF_TOKEN = '{{ csrf_token }}';</script>
+    <script src="{% static 'bacon/game.js' %}" ></script>
 {% endblock %}

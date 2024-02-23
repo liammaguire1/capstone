@@ -1,5 +1,6 @@
 import requests
-import random
+import json
+import re
 
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
@@ -77,7 +78,7 @@ def index(request):
 def menu(request):
     return render(request, "bacon/menu.html")
 
-def game(request):
+def game_load(request):
     
     # Submission from menu view
     if request.method == 'POST':
@@ -86,96 +87,152 @@ def game(request):
         timer = int(request.POST.get('time'))
 
         # Create dict of players
-        players = request.POST.getlist("player_names")
+        players_raw = request.POST.getlist("player_names")
+        players = json.dumps(players_raw)
 
-    return render(request, "bacon/game.html", {
-        'final': 2
-    })
+        return render(request, "bacon/game.html", {
+            'timer': timer,
+            'players': players
+        })
+
+
+def game_api(request, answer):
     
+    # Initial load
+    answer = answer.split(',')
+    if answer[0] == 'initial':
+        return JsonResponse({'instruction': 'Name an actor.',
+                            'returned': ['initial']})
 
-def placeholder(request, mode=None):
-    final = ''
-
-    # Set initial mode
-    if mode == None:
-        mode = random.randint(0, 1)
-
-    # User submitted text
-    if request.method == "POST":
-        
-        # Search movie/tv show from actor
-        if request.POST['mode'] == 'actor':
-            mode = actor_to_work(request)
-            works = Score.objects.get(user=request.user).query
-            final = []
-            for work in works['cast']:
-                for w in work:
-                    if 'original_title' in w:
-                        final.append(w['original_title'])
-
-        # Search actor from movie/tv show
-        else:
-            mode = work_to_actor(request)
-        
-    # GET request
-    elif request.method == 'GET':
-
-        # Query for current game
-        try:
-            score = Score.objects.get(user=request.user)
-            score.streak = 0
-            score.query = None
-        except Score.DoesNotExist:
-            score = Score(
-                user = request.user,
-                streak = 0,
-                query = None
-            )
-        score.save()
+    # Convert answer elements to list of ids
+    previous_ids = []
+    if len(answer) > 4:
+        i = 3
+        while i < len(answer):
+            previous_ids.append(int(answer[i]))
+            i += 1
     
-    return render(request, "bacon/play.html", {
-        "final": final,
-        "mode": mode
-    })
+    # Use actor to find work
+    if answer[0] == 'actor_to_work':
+        
+        # TMDB API call (actor -> work)
+        works = actor_to_work(answer[1])
 
-def actor_to_work(request):
+        # Nothing returned
+        if works[0] == None or works[1] == None:
+            return JsonResponse({'instruction': 'No work returned. Please try again',
+                                'returned': answer[2]})
+        
+        # List of works featuring the actor for next guess
+        ids = []
+        
+        # Add work ids to list
+        for work in works[1]['cast']:
+            if 'id' in work:
+                ids.append(work['id'])
+
+        # Validate
+        if works[0] not in previous_ids and answer[2] != '':
+            return JsonResponse({'instruction': 'Is that true? ACTOR TO WORK', 
+                             'ids': ids})
+
+        return JsonResponse({'instruction': f'Name a movie or tv show featuring {answer[1]}',
+                             'id': works[0], 
+                             'ids': ids})
+    
+    # Use work to find actor
+    elif answer[0] == 'work_to_actor':
+        
+        # TMDB API call (work -> actor)
+        works = work_to_actor(answer[1])
+
+        # Nothing returned
+        if works[0] == None and works[1] == None:
+            return JsonResponse({'instruction': 'No actors returned. Please try again',
+                                'returned': answer[2]})
+        
+        # List of actors featured in the work
+        ids = []
+        
+        # Add movie and tv ids to list
+        for i in range(2):
+            if 'cast' in works[1][i]:
+                for work in works[1][i]['cast']:
+                    if 'id' in work:
+                        ids.append(work['id'])
+
+        # Validate
+        print('NEW ID')
+        if works[0] not in previous_ids and answer[2] != '':
+            return JsonResponse({'instruction': 'Is that true? WORK TO ACTOR', 
+                             'ids': ids})
+
+        return JsonResponse({'instruction': f'Name an actor featured in {answer[1]}', 
+                             'ids': ids})
+
+def actor_to_work(actor):
 
     # Dynamically build url for API request
     url_one = 'https://api.themoviedb.org/3/search/person?query='
     url_two = '&include_adult=false&language=en-US&page=1'
-    actor = request.POST['actor'].split()
+    actor = actor.split()
     for i, a in enumerate(actor):
         url_one += a
         if i < len(actor) - 1:
             url_one += '%20'
     url_one += url_two
 
-    # Make API request
+    # Make API request to get actor id
     response = requests.get(url_one, headers=headers)
 
     # Handle request status
     if response.status_code == 200:
         if response.json()['results'] == []:
-            display = 'Actor not found :('
+            pass
         else:
             # Query all movies/tv shows the actor has been in
             actor_id = response.json()['results'][0]['id']
             actor_credit_url = f'https://api.themoviedb.org/3/person/{actor_id}/combined_credits'
             credit_response = requests.get(actor_credit_url, headers=headers)
-
-            # Set current game json to all movies/tvs shows feauturing actor
-            score = Score.objects.get(user=request.user)
-            score.streak += 1
-            score.query = credit_response.json()
-            score.save()
-            return False
+            return actor_id, credit_response.json()
     else:
-        display = 'Request Failed'
-    
-    return True
+        return
 
-def work_to_actor(request):
-    return True
+def work_to_actor(work):
+    
+    # Dynamically build url for API request
+    url_one = 'https://api.themoviedb.org/3/search/multi?query='
+    url_two = '&include_adult=false&language=en-US&page=1'
+    work = work.split()
+    for i, a in enumerate(work):
+        url_one += a
+        if i < len(work) - 1:
+            url_one += '%20'
+    url_one += url_two
+
+    # Make API request to get work id
+    response = requests.get(url_one, headers=headers)
+
+    # Handle request status
+    if response.status_code == 200:
+        
+        if response.json()['results'] == []:
+            pass
+
+        else:
+            work_id = response.json()['results'][0]['id']
+            
+            # Query credits for movie id
+            movie_credit_url = f'https://api.themoviedb.org/3/movie/{work_id}/credits?language=en-US'
+            movie_response = requests.get(movie_credit_url, headers=headers).json()
+
+            # Query credits for tv id
+            tv_credit_url = f'https://api.themoviedb.org/3/tv/{work_id}/credits?language=en-US'
+            tv_response = requests.get(tv_credit_url, headers=headers).json()
+
+            return work_id, [movie_response, tv_response]
+    else:
+        return
 
 def leaderboard(request):
     return render(request, "bacon/leaderboard.html")
