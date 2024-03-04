@@ -5,9 +5,9 @@
 
 <div style="display: none" id="gameData" players="{{ players }}" timer="{{ timer }}"></div>
 
-<div style="text-align: center;" id="time"></div>
+<h3 id="current-player"></h3>
 
-<div id="current-player"></div>
+<h4 style="text-align: center;" id="time"></h4>
 
 <div id="instruction"></div>
 
@@ -15,10 +15,14 @@
 
 <form id="guess_form" onsubmit="return false;">
     <div class="form-group">
-        <input class="form-control" type="text" id="guess_text" placeholder="Actor">
+        <input class="form-control" type="text" id="guess_text" autofocus required>
     </div>
     <input class="btn btn-primary" type="submit" id="guess_button" value="Submit">
 </form>
+
+<br><h4 id='score'></h4>
+
+<button class="btn btn-primary" id="play-again">Play Again</button>
 
 {% endblock %}
 

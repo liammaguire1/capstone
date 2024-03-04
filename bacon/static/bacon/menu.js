@@ -16,6 +16,7 @@ function names(players) {
         name.type = "text";
         name.id = "player_" + (i + 1);
         name.name = "player_names"
+        name.className = "player_input"
         
         var name_label = document.createElement("label");
         name_label.for = name.id;

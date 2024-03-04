@@ -6,8 +6,8 @@ class User(AbstractUser):
 
 class Score(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    streak = models.IntegerField()
-    query = models.JSONField(null=True, blank=True)
+    score = models.IntegerField()
+    players = models.TextField()
 
     def __str__(self):
-        return f"{self.user}: {self.streak}"
+        return f"{self.user}: {self.score}, {self.players}"

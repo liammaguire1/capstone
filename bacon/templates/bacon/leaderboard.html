@@ -3,6 +3,25 @@
 
 {% block body %}
 
-<div>TODO: leaderboard</div>
+<h2 id="leaderboard">Leaderboard</h2>
+
+<table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">User</th>
+        <th scope="col">Players</th>
+        <th scope="col">High Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for score in scores %}
+        <tr>
+            <td>{{score.user}}</td>
+            <td>{{score.players}}</td>
+            <td>{{score.score}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
 {% endblock %}

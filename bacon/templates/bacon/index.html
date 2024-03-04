@@ -3,10 +3,27 @@
 
 {% block body %}
 
-<div>TODO: rules of game</div>
+<h2 style="text-align: center; margin: 15px;">Welcome to Bacon!</h2>
 
-<br>
+<div class="container text-center">
+    <div class="row align-items-center">
+      <div class="col">
+        <div id="rules">
+            <p>Based on Six Degrees of Kevin Bacon, this game is all about chaining together actors and the movies/tv shows in which they've featured.</p>
+            <br><p>Grab some friends and try to set a high score!</p>
 
-<a href="{% url 'menu' %}">PLAY</a>
+            {% if user.is_authenticated %}
+            <form action="{% url 'menu' %}" method="post">
+                {% csrf_token %}
+                <input id="play-button" class="btn btn-primary" type="submit" value="Play">
+            </form>
+            {% endif %}
+        </div>
+      </div>
+      <div class="col">
+        <img id="bacon-img" src="https://oracleofbacon.org/images/bacon-graph.jpg" alt="Degrees of bacon">
+      </div>
+    </div>
+  </div>
 
 {% endblock %}
