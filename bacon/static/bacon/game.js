@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 document.querySelector("#guess_text").value = '';
                 document.querySelector("#score").innerHTML = 'Score: ' + String(score - 1);
-                document.querySelector("#current-player").innerHTML = players[turn % players.length] + "'s turn";
+                document.querySelector("#current-player").innerHTML = players[turn % players.length] + ":";
             } 
 
             // Assign html

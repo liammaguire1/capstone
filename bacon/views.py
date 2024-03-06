@@ -87,6 +87,12 @@ def game_load(request):
 
         # Create dict of players
         players_raw = request.POST.getlist("player_names")
+        
+        # Fill in "" player names
+        for i, player in enumerate(players_raw):
+            if player == "":
+                players_raw[i] = 'Player ' + str(i+1)
+        
         players = json.dumps(players_raw)
 
         return render(request, "bacon/game.html", {
@@ -195,7 +201,7 @@ def find(guess, mode):
             url_one += '%20'
     url_one += url_two
 
-    # Make API request to get actor id
+    # Make API request to get id
     response = requests.get(url_one, headers=headers)
 
     # Handle request status

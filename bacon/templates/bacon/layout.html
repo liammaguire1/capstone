@@ -12,9 +12,9 @@
         {% block script %}
         {% endblock %}
     </head> 
-    <body>
+    <body style="font-family: Verdana, Geneva, Tahoma, sans-serif;">
         <nav style="padding: 5px; margin: 5px;" class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="{% url 'index' %}">Bacon &#129363</a>
+            <a class="navbar-brand" href="{% url 'index' %}">Bacon.io &#129363</a>
           
             <div>
               <ul class="navbar-nav mr-auto">
@@ -48,6 +48,11 @@
         <div class="body">
             {% block body %}
             {% endblock %}
+        </div>
+        
+        <div>
+            <footer id="footer">This product uses the TMDB API but is not endorsed or certified by TMDB.</footer>
+            <img id="footer-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_1-5bdc75aaebeb75dc7ae79426ddd9be3b2be1e342510f8202baf6bffa71d7f5c4.svg"></img>
         </div>
     </body>
 </html>
